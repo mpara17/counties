@@ -1,18 +1,34 @@
 from flask import Flask, render_template, jsonify
 import pandas as pd
 import json
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 
 def load_population_data():
     """Load and process population data from CSV file."""
-    df = pd.read_csv('cleaned_data.csv')
+    # In production, this would be a URL to your data storage
+    data_url = os.getenv('POPULATION_DATA_URL', 'cleaned_data.csv')
+    if data_url.startswith('http'):
+        df = pd.read_csv(data_url)
+    else:
+        df = pd.read_csv(data_url)
     return df
 
 def load_geojson_data():
     """Load GeoJSON data for Illinois counties."""
-    with open('counties_data.json', 'r') as f:
-        return json.load(f)
+    # In production, this would be a URL to your data storage
+    geojson_url = os.getenv('GEOJSON_DATA_URL', 'counties_data.json')
+    if geojson_url.startswith('http'):
+        import requests
+        response = requests.get(geojson_url)
+        return response.json()
+    else:
+        with open(geojson_url, 'r') as f:
+            return json.load(f)
 
 def get_map_data():
     """Combine population data with GeoJSON data for the map visualization."""

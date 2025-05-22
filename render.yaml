@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: counties-population-map
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: POPULATION_DATA_URL
+        value: cleaned_data.csv
+      - key: GEOJSON_DATA_URL
+        value: counties_data.json 

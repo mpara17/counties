@@ -9,25 +9,21 @@ load_dotenv()
 app = Flask(__name__)
 
 def load_population_data():
-    """Load and process population data from CSV file."""
-    # In production, this would be a URL to your data storage
     data_url = os.getenv('POPULATION_DATA_URL', 'cleaned_data.csv')
-    if data_url.startswith('http'):
-        df = pd.read_csv(data_url)
-    else:
-        df = pd.read_csv(data_url)
+    df = pd.read_csv(data_url)
+    print("Population data loaded.")
     return df
 
 def load_geojson_data():
-    """Load GeoJSON data for Illinois counties."""
-    # In production, this would be a URL to your data storage
     geojson_url = os.getenv('GEOJSON_DATA_URL', 'counties_data.json')
     if geojson_url.startswith('http'):
         import requests
         response = requests.get(geojson_url)
+        print("GeoJSON loaded from web.")
         return response.json()
     else:
         with open(geojson_url, 'r') as f:
+            print("GeoJSON loaded from file.")
             return json.load(f)
 
 def get_map_data():
@@ -40,11 +36,7 @@ def get_map_data():
     county_data = {
         row['county'].replace(' County', '').lower(): {
             'name': row['county'].replace(' County', ''),
-            'population': int(row['2024']),
-            'population_history': {
-                year: int(row[year])
-                for year in ['2020', '2021', '2022', '2023', '2024']
-            }
+            'population': int(row['2024'])
         }
         for _, row in df.iterrows()
     }
@@ -54,22 +46,20 @@ def get_map_data():
         county_name = feature['properties']['name'].lower()
         if county_name in county_data:
             feature['properties'].update({
-                'population': county_data[county_name]['population'],
-                'population_history': county_data[county_name]['population_history']
+                'population': county_data[county_name]['population']
             })
     
     return geojson
 
 @app.route('/')
 def index():
-    """Render the main page with population data table."""
     df = load_population_data()
     return render_template('index.html', data=df.to_dict('records'))
 
 @app.route('/api/map-data')
 def map_data():
-    """API endpoint for map data."""
     return jsonify(get_map_data())
 
 if __name__ == '__main__':
     app.run(debug=True, port=5004)
+
